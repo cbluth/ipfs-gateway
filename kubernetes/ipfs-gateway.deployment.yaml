@@ -1,0 +1,15 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: ipfs-gateway
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ipfs-gateway
+    spec:
+      containers:
+      - name: ipfs-gateway
+        image: cbluth/ipfs-gateway:latest
+

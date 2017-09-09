@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+IPFS_PATH=/data/ipfs
+CADDYPATH=/data/caddy
+CADDYFILE="${CADDYPATH}/Caddyfile"
+CADDYHOST=${CADDYHOST:-":80"}
+
+mkdir -vp ${IPFS_PATH} ${CADDYPATH}
+
+if [ ! -e "${IPFS_PATH}/config" ]; then
+ipfs init
+fi
+
+cat << ! > ${CADDYFILE}
+${CADDYHOST} {
+    gzip
+    cors
+    cache
+    proxy / http://localhost:8080/ {
+        transparent
+    }
+}
+
+!
+
+echo "starting ipfs..." ; sleep 1
+/usr/local/bin/ipfs daemon --writable &
+echo "starting caddy..." ; sleep 1
+/usr/local/bin/caddy -log stdout -agree=true -conf=${CADDYFILE} -root=/var/tmp &
+
+while true ; do
+sleep 2
+
+# check for ipfs
+ps awux | grep [/]usr/local/bin/ipfs > /dev/null
+if ! [ $? -eq 0 ] ; then
+echo "ipfs not running, closing..."
+break ; fi
+
+# check for caddy
+ps awux | grep [/]usr/local/bin/caddy > /dev/null
+if ! [ $? -eq 0 ] ; then
+echo "caddy not running, closing..."
+break ; fi
+
+done
+
